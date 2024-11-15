@@ -1,0 +1,119 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Create and add a green frame to a player's character
+local function createGreenFrameForCharacter(character)
+    local head = character:WaitForChild("Head")
+    
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Name = "GreenFrameGUI"
+    billboardGui.Adornee = head
+    billboardGui.Size = UDim2.new(4, 0, 6, 0) -- Adjust the size to fit better
+    billboardGui.AlwaysOnTop = true
+    billboardGui.Parent = character
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0.9, 0, 1.2, 0) -- Adjust size
+    frame.Position = UDim2.new(0, 0, 0.05, 0) -- Adjust position
+    frame.BackgroundColor3 = Color3.fromRGB(139, 0, 0) -- Dark red
+    frame.BackgroundTransparency = 0.5 -- Set transparency to 0.5
+    frame.BorderSizePixel = 0
+    frame.Parent = billboardGui
+end
+
+-- Apply the green frame to a player when their character spawns
+local function onCharacterAdded(character)
+    createGreenFrameForCharacter(character)
+end
+
+-- Connect the function to each player's character spawning
+local function onPlayerAdded(player)
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(onCharacterAdded)
+        if player.Character then
+            createGreenFrameForCharacter(player.Character)
+        end
+    end
+end
+
+-- Connect to existing players and players joining
+Players.PlayerAdded:Connect(onPlayerAdded)
+for _, player in pairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
+
+local function lockCameraToHead()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local head = targetPlayer.Character.Head
+        local headPosition = camera:WorldToViewportPoint(head.Position)
+        if headPosition.Z > 0 then
+            local cameraPosition = camera.CFrame.Position
+            local direction = (head.Position - cameraPosition).Unit
+            camera.CFrame = CFrame.new(cameraPosition, head.Position)
+        end
+    end
+end
+
+local function autoClick()
+    if autoClickConnection then
+        autoClickConnection:Disconnect()
+    end
+    autoClickConnection = RunService.Heartbeat:Connect(function()
+        if isLeftMouseDown or isRightMouseDown then
+            if not isLobbyVisible() then
+                mouse1click()
+            end
+        else
+            autoClickConnection:Disconnect()
+        end
+    end)
+end
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Camera = Workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- Variables
+local silentAimActive = true
+local espActive = true
+local espList = {} -- Keep track of ESP drawings
+
+-- Function to get the nearest target's head
+local function getNearestHead()
+local closestPlayer = nil
+local shortestDistance = math.huge
+
+for _, player in pairs(Players:GetPlayers()) do
+if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+local distance = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+if distance < shortestDistance then
+shortestDistance = distance
+closestPlayer = player
+end
+end
+end
+
+if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
+return closestPlayer.Character.Head
+end
+
+return nil
+end
+
+-- Silent aim functionality with headshots
+UserInputService.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 and silentAimActive then
+local targetHead = getNearestHead()
+if targetHead then
+local aimPosition = targetHead.Position
+Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPosition)
+ReplicatedStorage.Remotes.Attack:FireServer(targetHead)
+end
+end
+end)
+
