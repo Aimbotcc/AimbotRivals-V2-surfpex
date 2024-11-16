@@ -117,7 +117,9 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- Create UI for toggling tracers and frames
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer.PlayerGui
 
 local function createStyledButton(text, position)
     local button = Instance.new("TextButton")
@@ -141,17 +143,18 @@ local function createStyledButton(text, position)
     return button
 end
 
-local tracersButton = createStyledButton("Toggle Tracers", UDim2.new(0, 10, 1, -120))
+local tracersButton = createStyledButton("Toggle Tracers", UDim2.new(1, -220, 0, 10))
 tracersButton.MouseButton1Click:Connect(function()
     tracersEnabled = not tracersEnabled
     tracersButton.BackgroundColor3 = tracersEnabled and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(255, 100, 100)
 end)
 
-local framesButton = createStyledButton("Toggle Frames", UDim2.new(0, 10, 1, -60))
+local framesButton = createStyledButton("Toggle Frames", UDim2.new(1, -220, 0, 70))
 framesButton.MouseButton1Click:Connect(function()
     framesEnabled = not framesEnabled
     framesButton.BackgroundColor3 = framesEnabled and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(255, 100, 100)
 end)
+
 
 
 
