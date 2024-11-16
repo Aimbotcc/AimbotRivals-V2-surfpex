@@ -21,15 +21,15 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     frame.Size = UDim2.new(0.9, 0, 1.2, 0) -- Adjust size
     frame.Position = UDim2.new(0, 0, 0.05, 0) -- Adjust position
     frame.BackgroundColor3 = Color3.fromRGB(0, 100, 0) -- Dark green
-    frame.BackgroundTransparency = 0.5 -- Set transparency to 0.5
+    frame.BackgroundTransparency = 0.1 -- Set transparency to 0.5
     frame.BorderSizePixel = 0
     frame.Parent = billboardGui
 
     -- Create a line using the Drawing API
     local line = Drawing.new("Line")
-    line.Thickness = 2
+    line.Thickness = 3
     line.Color = Color3.fromRGB(0, 100, 0) -- Dark green
-    line.Transparency = 0.5
+    line.Transparency = 0.2
 
     -- Store the line in the tracers table
     tracers[character] = line
