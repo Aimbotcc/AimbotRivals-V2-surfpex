@@ -6,7 +6,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     local head = character:WaitForChild("Head")
     local localRootPart = localCharacter:WaitForChild("HumanoidRootPart")
     
-    -- Create and add the green frame
+    -- Create and add the dark green frame
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Name = "GreenFrameGUI"
     billboardGui.Adornee = head
@@ -17,7 +17,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0.9, 0, 1.2, 0) -- Adjust size
     frame.Position = UDim2.new(0, 0, 0.05, 0) -- Adjust position
-    frame.BackgroundColor3 = Color3.fromRGB(139, 0, 0) -- Dark red
+    frame.BackgroundColor3 = Color3.fromRGB(0, 100, 0) -- Dark green
     frame.BackgroundTransparency = 0.5 -- Set transparency to 0.5
     frame.BorderSizePixel = 0
     frame.Parent = billboardGui
@@ -37,85 +37,29 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     beam.Attachment1 = targetAttachment
     beam.Width0 = 0.2
     beam.Width1 = 0.2
-    beam.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0)) -- Red color for the beam
+    beam.Color = ColorSequence.new(Color3.fromRGB(0, 100, 0)) -- Dark green for the beam
     beam.Transparency = NumberSequence.new(0.5) -- Set transparency to 0.5
+    beam.LightInfluence = 0 -- Ensure the beam is visible through parts
     beam.FaceCamera = true -- Ensure the beam faces the camera
     beam.Parent = localRootPart
 end
 
+-- Apply the dark green frame and tracer to a player's character
 local function onCharacterAdded(player)
-    player.CharacterAdded:Connect(function(character)
-        if player ~= LocalPlayer then
-            createFrameAndTracerForCharacter(character, LocalPlayer.Character)
-        elseif player == LocalPlayer then
-            -- Ensure tracers are reattached when the local player respawns
-            for _, otherPlayer in pairs(Players:GetPlayers()) do
-                if otherPlayer ~= LocalPlayer and otherPlayer.Character then
-                    createFrameAndTracerForCharacter(otherPlayer.Character, LocalPlayer.Character)
-                end
-            end
-        end
-    end)
-end
-
--- Connect to existing players and players joining
-Players.PlayerAdded:Connect(onCharacterAdded)
-for _, player in pairs(Players:GetPlayers()) do
-    onCharacterAdded(player)
-    if player.Character then
-        onCharacterAdded(player)
-    end
-end
-
-
--- Connect to existing players and players joining
-Players.PlayerAdded:Connect(onCharacterAdded)
-for _, player in pairs(Players:GetPlayers()) do
-    onCharacterAdded(player)
-end
-
-
--- Connect the function to each player's character spawning
-local function onPlayerAdded(player)
     if player ~= LocalPlayer then
-        player.CharacterAdded:Connect(onCharacterAdded)
+        player.CharacterAdded:Connect(function(character)
+            createFrameAndTracerForCharacter(character, LocalPlayer.Character)
+        end)
         if player.Character then
-            createGreenFrameForCharacter(player.Character)
+            createFrameAndTracerForCharacter(player.Character, LocalPlayer.Character)
         end
     end
 end
 
 -- Connect to existing players and players joining
-Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerAdded:Connect(onCharacterAdded)
 for _, player in pairs(Players:GetPlayers()) do
-    onPlayerAdded(player)
-end
-
-local function lockCameraToHead()
-    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
-        local head = targetPlayer.Character.Head
-        local headPosition = camera:WorldToViewportPoint(head.Position)
-        if headPosition.Z > 0 then
-            local cameraPosition = camera.CFrame.Position
-            local direction = (head.Position - cameraPosition).Unit
-            camera.CFrame = CFrame.new(cameraPosition, head.Position)
-        end
-    end
-end
-
-local function autoClick()
-    if autoClickConnection then
-        autoClickConnection:Disconnect()
-    end
-    autoClickConnection = RunService.Heartbeat:Connect(function()
-        if isLeftMouseDown or isRightMouseDown then
-            if not isLobbyVisible() then
-                mouse1click()
-            end
-        else
-            autoClickConnection:Disconnect()
-        end
-    end)
+    onCharacterAdded(player)
 end
 
 -- Services
@@ -129,40 +73,86 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Variables
 local silentAimActive = true
-local espActive = true
-local espList = {} -- Keep track of ESP drawings
+local isLeftMouseDown = false
+local isRightMouseDown = false
+local autoClickConnection = nil
+local targetPlayer = nil
+
+-- Function to check if the lobby is visible
+local function isLobbyVisible()
+    return LocalPlayer.PlayerGui:FindFirstChild("MainGui") and LocalPlayer.PlayerGui.MainGui:FindFirstChild("MainFrame") and LocalPlayer.PlayerGui.MainGui.MainFrame:FindFirstChild("Lobby") and LocalPlayer.PlayerGui.MainGui.MainFrame.Lobby.Currency.Visible
+end
+
+-- Function to lock camera to the target player's head
+local function lockCameraToHead()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local head = targetPlayer.Character.Head
+        local headPosition = Camera:WorldToViewportPoint(head.Position)
+        if headPosition.Z > 0 then
+            local cameraPosition = Camera.CFrame.Position
+            local direction = (head.Position - cameraPosition).Unit
+            Camera.CFrame = CFrame.new(cameraPosition, head.Position)
+        end
+    end
+end
+
 
 -- Function to get the nearest target's head
 local function getNearestHead()
-local closestPlayer = nil
-local shortestDistance = math.huge
+    local closestPlayer = nil
+    local shortestDistance = math.huge
 
-for _, player in pairs(Players:GetPlayers()) do
-if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-local distance = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-if distance < shortestDistance then
-shortestDistance = distance
-closestPlayer = player
-end
-end
-end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = player
+            end
+        end
+    end
 
-if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
-return closestPlayer.Character.Head
-end
+    if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
+        return closestPlayer.Character.Head
+    end
 
-return nil
+    return nil
 end
 
 -- Silent aim functionality with headshots
 UserInputService.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 and silentAimActive then
-local targetHead = getNearestHead()
-if targetHead then
-local aimPosition = targetHead.Position
-Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPosition)
-ReplicatedStorage.Remotes.Attack:FireServer(targetHead)
-end
-end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and silentAimActive then
+        local targetHead = getNearestHead()
+        if targetHead then
+            local aimPosition = targetHead.Position
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPosition)
+            ReplicatedStorage.Remotes.Attack:FireServer(targetHead)
+        end
+    end
 end)
 
+-- Detect when mouse buttons are pressed
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isLeftMouseDown = true
+        autoClick()
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isRightMouseDown = true
+        autoClick()
+    end
+end)
+
+-- Detect when mouse buttons are released
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isLeftMouseDown = false
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isRightMouseDown = false
+    end
+end)
+
+-- Run the lock camera to head function periodically
+RunService.RenderStepped:Connect(function()
+    lockCameraToHead()
+end)
