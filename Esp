@@ -38,7 +38,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     beam.Width0 = 0.2
     beam.Width1 = 0.2
     beam.Color = ColorSequence.new(Color3.fromRGB(0, 100, 0)) -- Dark green for the beam
-    beam.Transparency = NumberSequence.new(0.5) -- Set transparency to 0.5
+    beam.Transparency = NumberSequence.new(0.3) -- Set transparency to 0.5
     beam.LightInfluence = 0 -- Ensure the beam is visible through parts
     beam.FaceCamera = true -- Ensure the beam faces the camera
     beam.Parent = localRootPart
