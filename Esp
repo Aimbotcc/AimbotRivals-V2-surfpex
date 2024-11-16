@@ -21,7 +21,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     frame.Size = UDim2.new(0.9, 0, 1.2, 0) -- Adjust size
     frame.Position = UDim2.new(0, 0, 0.05, 0) -- Adjust position
     frame.BackgroundColor3 = Color3.fromRGB(0, 100, 0) -- Dark green
-    frame.BackgroundTransparency = 0.1 -- Set transparency to 0.5
+    frame.BackgroundTransparency = 0.1 -- Set transparency to 0.1
     frame.BorderSizePixel = 0
     frame.Parent = billboardGui
 
@@ -87,6 +87,7 @@ Players.PlayerRemoving:Connect(function(player)
         tracers[player.Character] = nil
     end
 end)
+
 
 
 
