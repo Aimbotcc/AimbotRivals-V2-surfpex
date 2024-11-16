@@ -29,7 +29,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     local line = Drawing.new("Line")
     line.Thickness = 3
     line.Color = Color3.fromRGB(0, 100, 0) -- Dark green
-    line.Transparency = 0.2
+    line.Transparency = 0.5
 
     -- Store the line in the tracers table
     tracers[character] = line
