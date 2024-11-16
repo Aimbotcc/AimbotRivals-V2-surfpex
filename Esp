@@ -1,10 +1,13 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Create and add a green frame to a player's character
-local function createGreenFrameForCharacter(character)
+local function createGreenFrameAndTracerForCharacter(character, localCharacter)
     local head = character:WaitForChild("Head")
+    local localRootPart = localCharacter:WaitForChild("HumanoidRootPart")
     
+    -- Create and add the green frame
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Name = "GreenFrameGUI"
     billboardGui.Adornee = head
@@ -19,12 +22,46 @@ local function createGreenFrameForCharacter(character)
     frame.BackgroundTransparency = 0.5 -- Set transparency to 0.5
     frame.BorderSizePixel = 0
     frame.Parent = billboardGui
+
+    -- Create attachments for tracers
+    local localAttachment = Instance.new("Attachment")
+    localAttachment.Name = "LocalAttachment"
+    localAttachment.Parent = localRootPart
+
+    local targetAttachment = Instance.new("Attachment")
+    targetAttachment.Name = "TargetAttachment"
+    targetAttachment.Parent = head
+
+    -- Create the beam connecting the two attachments
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = localAttachment
+    beam.Attachment1 = targetAttachment
+    beam.Width0 = 0.2
+    beam.Width1 = 0.2
+    beam.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0)) -- Red color for the beam
+    beam.Transparency = NumberSequence.new(0.5) -- Set transparency to 0.5
+    beam.FaceCamera = true -- Ensure the beam faces the camera
+    beam.Parent = localRootPart
 end
 
--- Apply the green frame to a player when their character spawns
-local function onCharacterAdded(character)
-    createGreenFrameForCharacter(character)
+-- Apply the green frame and tracer to a player's character
+local function onCharacterAdded(player)
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function(character)
+            createGreenFrameAndTracerForCharacter(character, LocalPlayer.Character)
+        end)
+        if player.Character then
+            createGreenFrameAndTracerForCharacter(player.Character, LocalPlayer.Character)
+        end
+    end
 end
+
+-- Connect to existing players and players joining
+Players.PlayerAdded:Connect(onCharacterAdded)
+for _, player in pairs(Players:GetPlayers()) do
+    onCharacterAdded(player)
+end
+
 
 -- Connect the function to each player's character spawning
 local function onPlayerAdded(player)
