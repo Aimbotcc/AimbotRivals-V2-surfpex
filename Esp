@@ -1,11 +1,14 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Table to hold all drawing lines
+local tracers = {}
 
 local function createFrameAndTracerForCharacter(character, localCharacter)
     local head = character:WaitForChild("Head")
-    local localRootPart = localCharacter:WaitForChild("HumanoidRootPart")
-    
+
     -- Create and add the dark green frame
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Name = "GreenFrameGUI"
@@ -22,26 +25,27 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     frame.BorderSizePixel = 0
     frame.Parent = billboardGui
 
-    -- Create attachments for tracers
-    local localAttachment = Instance.new("Attachment")
-    localAttachment.Name = "LocalAttachment"
-    localAttachment.Parent = localRootPart
+    -- Create a line using the Drawing API
+    local line = Drawing.new("Line")
+    line.Thickness = 2
+    line.Color = Color3.fromRGB(0, 100, 0) -- Dark green
+    line.Transparency = 0.5
 
-    local targetAttachment = Instance.new("Attachment")
-    targetAttachment.Name = "TargetAttachment"
-    targetAttachment.Parent = head
+    -- Store the line in the tracers table
+    tracers[character] = line
 
-    -- Create the beam connecting the two attachments
-    local beam = Instance.new("Beam")
-    beam.Attachment0 = localAttachment
-    beam.Attachment1 = targetAttachment
-    beam.Width0 = 0.2
-    beam.Width1 = 0.2
-    beam.Color = ColorSequence.new(Color3.fromRGB(0, 100, 0)) -- Dark green for the beam
-    beam.Transparency = NumberSequence.new(0.3) -- Set transparency to 0.5
-    beam.LightInfluence = 0 -- Ensure the beam is visible through parts
-    beam.FaceCamera = true -- Ensure the beam faces the camera
-    beam.Parent = localRootPart
+    -- Update the line position every frame
+    RunService.RenderStepped:Connect(function()
+        if character.Parent and localCharacter and localCharacter:FindFirstChild("HumanoidRootPart") then
+            local headPosition = Camera:WorldToViewportPoint(character.Head.Position)
+            local rootPosition = Camera:WorldToViewportPoint(localCharacter.HumanoidRootPart.Position)
+            line.From = Vector2.new(rootPosition.X, rootPosition.Y)
+            line.To = Vector2.new(headPosition.X, headPosition.Y)
+            line.Visible = true
+        else
+            line.Visible = false
+        end
+    end)
 end
 
 -- Apply the dark green frame and tracer to a player's character
@@ -61,6 +65,15 @@ Players.PlayerAdded:Connect(onCharacterAdded)
 for _, player in pairs(Players:GetPlayers()) do
     onCharacterAdded(player)
 end
+
+-- Clean up lines when characters are removed
+Players.PlayerRemoving:Connect(function(player)
+    if tracers[player.Character] then
+        tracers[player.Character]:Remove()
+        tracers[player.Character] = nil
+    end
+end)
+
 
 -- Services
 local Players = game:GetService("Players")
