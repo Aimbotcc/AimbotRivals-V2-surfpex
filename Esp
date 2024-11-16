@@ -149,7 +149,7 @@ tracersButton.MouseButton1Click:Connect(function()
     tracersButton.BackgroundColor3 = tracersEnabled and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(255, 100, 100)
 end)
 
-local framesButton = createStyledButton("Toggle Frames", UDim2.new(1, -220, 0, 70))
+local framesButton = createStyledButton("Toggle Boxes", UDim2.new(1, -220, 0, 70))
 framesButton.MouseButton1Click:Connect(function()
     framesEnabled = not framesEnabled
     framesButton.BackgroundColor3 = framesEnabled and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(255, 100, 100)
