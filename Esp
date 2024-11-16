@@ -1,10 +1,36 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local Camera = Workspace.CurrentCamera
 
--- Table to hold all drawing lines
+-- Variables
+local silentAimActive = true
+local isLeftMouseDown = false
+local isRightMouseDown = false
+local autoClickConnection = nil
+local tracersEnabled = true
+local framesEnabled = true
 local tracers = {}
+
+-- Function to check if the lobby is visible
+local function isLobbyVisible()
+    return LocalPlayer.PlayerGui:FindFirstChild("MainGui") and LocalPlayer.PlayerGui.MainGui:FindFirstChild("MainFrame") and LocalPlayer.PlayerGui.MainGui.MainFrame:FindFirstChild("Lobby") and LocalPlayer.PlayerGui.MainGui.MainFrame.Lobby.Currency.Visible
+end
+
+-- Function to lock camera to the target player's head
+local function lockCameraToHead()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local head = targetPlayer.Character.Head
+        local headPosition = Camera:WorldToViewportPoint(head.Position)
+        if headPosition.Z > 0 then
+            local cameraPosition = Camera.CFrame.Position
+            Camera.CFrame = CFrame.new(cameraPosition, head.Position)
+        end
+    end
+end
 
 local function createFrameAndTracerForCharacter(character, localCharacter)
     local head = character:WaitForChild("Head")
@@ -21,7 +47,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     frame.Size = UDim2.new(0.9, 0, 1.2, 0) -- Adjust size
     frame.Position = UDim2.new(0, 0, 0.05, 0) -- Adjust position
     frame.BackgroundColor3 = Color3.fromRGB(0, 100, 0) -- Dark green
-    frame.BackgroundTransparency = 0.9 -- Set transparency to 0.8
+    frame.BackgroundTransparency = 0.8 -- Set transparency to 0.8
     frame.BorderSizePixel = 0
     frame.Parent = billboardGui
 
@@ -32,11 +58,11 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     line.Transparency = 0.5
 
     -- Store the line in the tracers table
-    tracers[character] = line
+    tracers[character] = {line = line, frame = frame}
 
     -- Update the line position every frame
     RunService.RenderStepped:Connect(function()
-        if character.Parent and localCharacter and localCharacter:FindFirstChild("HumanoidRootPart") then
+        if tracersEnabled and character.Parent and localCharacter and localCharacter:FindFirstChild("HumanoidRootPart") then
             local headPosition = Camera:WorldToViewportPoint(character.Head.Position)
             local rootPosition = Camera:WorldToViewportPoint(localCharacter.HumanoidRootPart.Position)
             line.From = Vector2.new(rootPosition.X, rootPosition.Y)
@@ -45,6 +71,7 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
         else
             line.Visible = false
         end
+        frame.Visible = framesEnabled
     end)
 end
 
@@ -83,10 +110,49 @@ end
 -- Clean up lines when characters are removed
 Players.PlayerRemoving:Connect(function(player)
     if tracers[player.Character] then
-        tracers[player.Character]:Remove()
+        tracers[player.Character].line:Remove()
+        tracers[player.Character].frame:Destroy()
         tracers[player.Character] = nil
     end
 end)
+
+-- Create UI for toggling tracers and frames
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+
+local function createStyledButton(text, position)
+    local button = Instance.new("TextButton")
+    button.Text = text
+    button.Size = UDim2.new(0, 200, 0, 50)
+    button.Position = position
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- Dark grey
+    button.BackgroundTransparency = 0.5
+    button.BorderColor3 = Color3.fromRGB(255, 255, 255) -- White outline
+    button.BorderSizePixel = 1
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 24
+    button.AutoButtonColor = false
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 12)
+    uiCorner.Parent = button
+
+    button.Parent = ScreenGui
+    return button
+end
+
+local tracersButton = createStyledButton("Toggle Tracers", UDim2.new(0, 10, 1, -120))
+tracersButton.MouseButton1Click:Connect(function()
+    tracersEnabled = not tracersEnabled
+    tracersButton.BackgroundColor3 = tracersEnabled and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(255, 100, 100)
+end)
+
+local framesButton = createStyledButton("Toggle Frames", UDim2.new(0, 10, 1, -60))
+framesButton.MouseButton1Click:Connect(function()
+    framesEnabled = not framesEnabled
+    framesButton.BackgroundColor3 = framesEnabled and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(255, 100, 100)
+end)
+
 
 
 
