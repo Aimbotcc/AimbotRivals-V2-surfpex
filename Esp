@@ -48,7 +48,6 @@ local function createFrameAndTracerForCharacter(character, localCharacter)
     end)
 end
 
--- Apply the dark green frame and tracer to a player's character
 local function onCharacterAdded(player)
     if player ~= LocalPlayer then
         player.CharacterAdded:Connect(function(character)
@@ -60,11 +59,35 @@ local function onCharacterAdded(player)
     end
 end
 
--- Connect to existing players and players joining
+-- Apply tracers to the local player's character
+local function onLocalCharacterAdded(character)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            createFrameAndTracerForCharacter(player.Character, character)
+        end
+    end
+end
+
+-- Connect to local player's character spawning
+LocalPlayer.CharacterAdded:Connect(onLocalCharacterAdded)
+if LocalPlayer.Character then
+    onLocalCharacterAdded(LocalPlayer.Character)
+end
+
+-- Connect to other players' characters spawning
 Players.PlayerAdded:Connect(onCharacterAdded)
 for _, player in pairs(Players:GetPlayers()) do
     onCharacterAdded(player)
 end
+
+-- Clean up lines when characters are removed
+Players.PlayerRemoving:Connect(function(player)
+    if tracers[player.Character] then
+        tracers[player.Character]:Remove()
+        tracers[player.Character] = nil
+    end
+end)
+
 
 
 -- Services
