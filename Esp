@@ -2,8 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Create and add a green frame to a player's character
-local function createGreenFrameAndTracerForCharacter(character, localCharacter)
+local function createFrameAndTracerForCharacter(character, localCharacter)
     local head = character:WaitForChild("Head")
     local localRootPart = localCharacter:WaitForChild("HumanoidRootPart")
     
@@ -44,17 +43,30 @@ local function createGreenFrameAndTracerForCharacter(character, localCharacter)
     beam.Parent = localRootPart
 end
 
--- Apply the green frame and tracer to a player's character
 local function onCharacterAdded(player)
-    if player ~= LocalPlayer then
-        player.CharacterAdded:Connect(function(character)
-            createGreenFrameAndTracerForCharacter(character, LocalPlayer.Character)
-        end)
-        if player.Character then
-            createGreenFrameAndTracerForCharacter(player.Character, LocalPlayer.Character)
+    player.CharacterAdded:Connect(function(character)
+        if player ~= LocalPlayer then
+            createFrameAndTracerForCharacter(character, LocalPlayer.Character)
+        elseif player == LocalPlayer then
+            -- Ensure tracers are reattached when the local player respawns
+            for _, otherPlayer in pairs(Players:GetPlayers()) do
+                if otherPlayer ~= LocalPlayer and otherPlayer.Character then
+                    createFrameAndTracerForCharacter(otherPlayer.Character, LocalPlayer.Character)
+                end
+            end
         end
+    end)
+end
+
+-- Connect to existing players and players joining
+Players.PlayerAdded:Connect(onCharacterAdded)
+for _, player in pairs(Players:GetPlayers()) do
+    onCharacterAdded(player)
+    if player.Character then
+        onCharacterAdded(player)
     end
 end
+
 
 -- Connect to existing players and players joining
 Players.PlayerAdded:Connect(onCharacterAdded)
