@@ -66,14 +66,6 @@ for _, player in pairs(Players:GetPlayers()) do
     onCharacterAdded(player)
 end
 
--- Clean up lines when characters are removed
-Players.PlayerRemoving:Connect(function(player)
-    if tracers[player.Character] then
-        tracers[player.Character]:Remove()
-        tracers[player.Character] = nil
-    end
-end)
-
 
 -- Services
 local Players = game:GetService("Players")
